@@ -103,6 +103,29 @@
                     </includes>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>io.openapitools.swagger</groupId>
+                <artifactId>swagger-maven-plugin</artifactId>
+                <version>2.1.2</version>
+                <configuration>
+                    <attachSwaggerArtifact>true</attachSwaggerArtifact>
+                    <resourcePackages>
+                        <resourcePackage>ir.sahab.nexus.plugin.tag.internal</resourcePackage>
+                    </resourcePackages>
+                    <outputDirectory>${basedir}/target/</outputDirectory>
+                    <outputFilename>swagger</outputFilename>
+                    <outputFormats>JSON,YAML</outputFormats>
+                    <prettyPrint>true</prettyPrint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <repositories>
