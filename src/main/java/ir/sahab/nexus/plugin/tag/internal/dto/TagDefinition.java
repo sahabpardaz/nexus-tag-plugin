@@ -57,7 +57,7 @@ public class TagDefinition {
 
     @Override
     public String toString() {
-        return "TagDefinition{name='" + name + "', attributes=" + attributes + '}';
+        return "TagDefinition{name='" + name + "', attributes=" + attributes + ", components=" + components + '}';
     }
 
 }

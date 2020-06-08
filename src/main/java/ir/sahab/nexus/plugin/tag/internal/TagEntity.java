@@ -2,6 +2,7 @@ package ir.sahab.nexus.plugin.tag.internal;
 
 import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
 import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,17 @@ class TagEntity extends AbstractEntity {
         return new Tag(name, attributes, components, firstCreated, lastUpdated);
     }
 
+    /**
+     * @return true if criteria matches with associated components of this tag, otherwise false.
+     */
+    public boolean matches(Collection<ComponentSearchCriterion> componentVersionCriteria) {
+        for (ComponentSearchCriterion criterion : componentVersionCriteria) {
+            if (components.stream().noneMatch(criterion::matches)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     @Override
     public String toString() {

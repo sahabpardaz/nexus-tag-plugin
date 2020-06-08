@@ -27,7 +27,10 @@ public interface TagRestResourceDoc {
     @GET
     @ApiOperation("List tags, results may be filtered by optional attributes")
     List<Tag> list(
-            @ApiParam("List of attribute key value pairs to search in format key:value") List<String> attributes);
+            @ApiParam("List of attribute key value pairs to search in format key:value") List<String> attributes,
+            @ApiParam("List of associated components to search for in format repository:group:name op version." +
+                    " op=(=|>|<|>=|=<)")
+                List<String> components);
 
     @POST
     @ApiOperation("Add a new tag")

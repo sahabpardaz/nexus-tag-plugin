@@ -1,4 +1,4 @@
-package ir.sahab.nexus.plugin.tag.internal.dto;
+package ir.sahab.nexus.plugin.tag;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
@@ -11,6 +11,10 @@ import static org.junit.Assert.assertFalse;
 import com.google.common.collect.ImmutableMap;
 import ir.sahab.dockercomposer.DockerCompose;
 import ir.sahab.dockercomposer.WaitFor;
+import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
+import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
+import ir.sahab.nexus.plugin.tag.internal.dto.TagCloneRequest;
+import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -122,10 +126,13 @@ public class IntegrationTest {
         Tag retrieved = target.path("tags/" + tag.getName()).request().get(Tag.class);
         assertDefinitionEquals(tag, retrieved);
 
-        // Test search by attribute
+        // Test search by attribute and component
+        String component1Criterion = String.format("%s:%s:%s = %s", component1.getRepository(), component1.getGroup(),
+                component1.getName(), component1.getVersion());
         List<Tag> result = target.path("tags")
-                .queryParam("attributes", CHANGE_ID + ":" + tag.getAttributes().get(CHANGE_ID))
-                .queryParam("attributes", STATUS + ":" + tag.getAttributes().get(STATUS))
+                .queryParam("attribute", CHANGE_ID + ":" + tag.getAttributes().get(CHANGE_ID))
+                .queryParam("attribute", STATUS + ":" + tag.getAttributes().get(STATUS))
+                .queryParam("associatedComponent", component1Criterion)
                 .request()
                 .get(new GenericType<List<Tag>>() {});
         assertEquals(1, result.size());

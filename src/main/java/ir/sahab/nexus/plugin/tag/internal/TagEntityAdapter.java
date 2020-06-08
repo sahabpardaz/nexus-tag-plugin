@@ -8,19 +8,18 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
-
+import java.util.stream.StreamSupport;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
-
-import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
 
 /**
  * Provides persisting/reading tags from database.
@@ -115,26 +114,55 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
         if (identifiable == null) {
             return Optional.empty();
         }
-        return Optional.of(transformEntity(identifiable.getRecord()));
+        return Optional.ofNullable(transformEntity(identifiable.getRecord()));
     }
 
     /**
-     * Searches for tags with given attributes.
-     * @param tx database connection
-     * @param attributes map of attributes to search.
-     * @return list of tags that has all of given attributes
+     * Searches for tags with given attributes and components.
+     *
+     * @param tx connection to use for searching
+     * @param attributes map of attribute key value pairs to search for
+     * @param componentsSearchCriteria criteria to match on associated components
+     * @return found tag entities
      */
-    public Iterable<TagEntity> search(ODatabaseDocumentTx tx, Map<String, String> attributes) {
+    public List<TagEntity> search(ODatabaseDocumentTx tx, Map<String, String> attributes,
+            Collection<ComponentSearchCriterion> componentsSearchCriteria) {
         List<QueryPredicate> predicates = new ArrayList<>();
         for (Entry<String, String> entry : attributes.entrySet()) {
             String field = ATTRIBUTES_FIELD + "[" + stringLiteral(entry.getKey()) + "]";
             predicates.add(new QueryPredicate(field, "=", stringLiteral(entry.getValue())));
         }
 
+        for (ComponentSearchCriterion criterion : componentsSearchCriteria) {
+            predicates.add(toQueryPredicate(criterion));
+        }
+
         String query = buildQuery(predicates);
         log.info("Searching for tags with query={}", query);
         List<ODocument> documents = tx.query(new OSQLSynchQuery<>(query));
-        return transform(documents);
+        return filterByComponentCriteria(transform(documents), componentsSearchCriteria);
+    }
+
+    private static QueryPredicate toQueryPredicate(ComponentSearchCriterion criterion) {
+        List<QueryPredicate> compFieldPredicates = new ArrayList<>();
+        compFieldPredicates
+                .add(new QueryPredicate(COMPONENT_REPOSITORY_FIELD, "=", stringLiteral(criterion.getRepository())));
+        compFieldPredicates.add(new QueryPredicate(COMPONENT_GROUP_FIELD, "=", stringLiteral(criterion.getGroup())));
+        compFieldPredicates.add(new QueryPredicate(COMPONENT_NAME_FIELD, "=", stringLiteral(criterion.getName())));
+        return new QueryPredicate(COMPONENTS_FIELD, "contains", QueryPredicate.andExpression(compFieldPredicates));
+    }
+
+    /**
+     * Filters given tags by matching component criteria.
+     * @param tags tags to filter
+     * @param componentsSearchCriteria criteria to match on associated components
+     * @return tags which has associated components regarding to version criteria
+     */
+    private static List<TagEntity> filterByComponentCriteria(Iterable<TagEntity> tags,
+            Collection<ComponentSearchCriterion> componentsSearchCriteria) {
+        return StreamSupport.stream(tags.spliterator(), false)
+                .filter(tag -> tag.matches(componentsSearchCriteria))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -147,10 +175,7 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
     private static String buildQuery(List<QueryPredicate> predicates) {
         StringBuilder query = new StringBuilder("select * from ").append(DB_CLASS);
         if (!predicates.isEmpty()) {
-            String predicateString = predicates.stream()
-                    .map(predicate -> '(' + predicate.field + ' ' + predicate.operator + ' ' + predicate.value + ')')
-                    .collect(Collectors.joining(" and "));
-            query.append(" where ").append(predicateString);
+            query.append(" where ").append(QueryPredicate.andExpression(predicates));
         }
         query.append(" order by ").append(LAST_UPDATED_FIELD).append(" DESC");
         return query.toString();
@@ -165,6 +190,16 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
             this.field = field;
             this.operator = operator;
             this.value = value;
+        }
+
+        CharSequence toQueryExpression() {
+            return new StringBuilder(field).append(' ').append(operator).append(' ').append(value);
+        }
+
+        static String andExpression(List<QueryPredicate> predicates) {
+            return predicates.stream()
+                    .map(QueryPredicate::toQueryExpression)
+                    .collect(Collectors.joining(" and ", "(", ")"));
         }
     }
 }

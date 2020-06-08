@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -34,7 +35,7 @@ import org.sonatype.goodies.common.ComponentSupport;
 import org.sonatype.nexus.rest.Resource;
 
 /**
- * Endpoint which provides RESTful API for tagging.
+ * Endpoint which provides RESTFul API for tagging.
  */
 @Named
 @Singleton
@@ -61,10 +62,18 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Override
-    public List<Tag> list(@QueryParam("attributes") List<String> attributes) {
+    public List<Tag> list(@QueryParam("attribute") List<String> attributes,
+            @QueryParam("associatedComponent") List<String> components) {
         Map<String, String> attributeMap = decodeAttributes(attributes);
-        List<Tag> tags = tagStore.search(attributeMap);
-        log.info("Tag search for attributes={}={}", attributes, tags);
+        List<ComponentSearchCriterion> componentCriteria;
+        try {
+            componentCriteria = components.stream().map(ComponentSearchCriterion::parse).collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            Response response = Response.status(Status.BAD_REQUEST).entity(ErrorResponse.of(e.getMessage())).build();
+            throw new BadRequestException(response);
+        }
+        List<Tag> tags = tagStore.search(attributeMap, componentCriteria);
+        log.info("Tag search for attributes={}, associated components={}:{}", attributes, components, tags);
         return tags;
     }
 

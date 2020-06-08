@@ -58,9 +58,10 @@ public class TagStore extends StateGuardLifecycleSupport {
         }
     }
 
-    public List<Tag> search(Map<String, String> attributes) {
+    public List<Tag> search(Map<String, String> attributes, List<ComponentSearchCriterion> componentCriteria) {
         try (ODatabaseDocumentTx tx = dbProvider.get().acquire()) {
-            return StreamSupport.stream(entityAdapter.search(tx, attributes).spliterator(), false)
+            return entityAdapter.search(tx, attributes, componentCriteria)
+                    .stream()
                     .map(TagEntity::toDto)
                     .collect(Collectors.toList());
         }

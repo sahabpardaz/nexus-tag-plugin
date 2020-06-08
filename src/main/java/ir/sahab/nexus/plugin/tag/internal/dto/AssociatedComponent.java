@@ -92,6 +92,6 @@ public class AssociatedComponent {
 
     @Override
     public String toString() {
-        return group + ":" + name + ":" + version;
+        return repository + ":" + group + ":" + name + ":" + version;
     }
 }
