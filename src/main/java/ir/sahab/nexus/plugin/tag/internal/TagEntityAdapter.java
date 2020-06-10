@@ -71,7 +71,6 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
         tag.setFirstCreated(oDocument.field(FIRST_CREATED_FIELD));
         tag.setLastUpdated(oDocument.field(LAST_UPDATED_FIELD));
         tag.setAttributes(oDocument.field(ATTRIBUTES_FIELD));
-        tag.setComponents(oDocument.field(COMPONENTS_FIELD));
 
         List<ODocument> componentDocuments = oDocument.field(COMPONENTS_FIELD);
         List<AssociatedComponent> components = componentDocuments.stream()
@@ -119,6 +118,12 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
         return Optional.of(transformEntity(identifiable.getRecord()));
     }
 
+    /**
+     * Searches for tags with given attributes.
+     * @param tx database connection
+     * @param attributes map of attributes to search.
+     * @return list of tags that has all of given attributes
+     */
     public Iterable<TagEntity> search(ODatabaseDocumentTx tx, Map<String, String> attributes) {
         List<QueryPredicate> predicates = new ArrayList<>();
         for (Entry<String, String> entry : attributes.entrySet()) {
@@ -141,20 +146,11 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
 
     private static String buildQuery(List<QueryPredicate> predicates) {
         StringBuilder query = new StringBuilder("select * from ").append(DB_CLASS);
-        Iterator<QueryPredicate> it = predicates.iterator();
-        if (it.hasNext()) {
-            query.append(" where");
-        }
-        while (it.hasNext()) {
-            QueryPredicate predicate = it.next();
-            query.append(' ').append(predicate.field)
-                    .append(' ')
-                    .append(predicate.operator)
-                    .append(' ')
-                    .append(predicate.value);
-            if (it.hasNext()) {
-                query.append(" and");
-            }
+        if (!predicates.isEmpty()) {
+            String predicateString = predicates.stream()
+                    .map(predicate -> '(' + predicate.field + ' ' + predicate.operator + ' ' + predicate.value + ')')
+                    .collect(Collectors.joining(" and "));
+            query.append(" where ").append(predicateString);
         }
         query.append(" order by ").append(LAST_UPDATED_FIELD).append(" DESC");
         return query.toString();

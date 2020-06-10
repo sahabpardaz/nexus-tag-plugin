@@ -71,9 +71,9 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     /**
      * Decodes query parameter of attributes to an attribute map.
      *
-     * @param attributes list of value pairs of attributes in key=value format
+     * @param attributes list of value pairs of attributes in key:value format
      * @return map of attribute name to search value
-     * @throws BadRequestException if key value pair is not in format key=value
+     * @throws BadRequestException if key value pair is not in format key:value
      */
     private Map<String, String> decodeAttributes(List<String> attributes) {
         if (attributes == null) {
@@ -81,7 +81,7 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
         }
         Map<String, String> map = new HashMap<>();
         for (String keyValue : attributes) {
-            String[] splitted = keyValue.split("=");
+            String[] splitted = keyValue.split(":", 2);
             if (splitted.length != 2 || splitted[0].isEmpty()) {
                 Response response = Response.status(Status.BAD_REQUEST)
                         .entity(ErrorResponse.of("Invalid attribute key value pair: " + keyValue))

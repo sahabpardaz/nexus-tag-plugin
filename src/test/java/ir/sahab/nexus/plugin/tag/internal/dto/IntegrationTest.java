@@ -43,7 +43,6 @@ public class IntegrationTest {
     public static final String USERNAME = "admin";
     public static final String PASSWORD = "admin123";
     private static final String REPO_MAVEN_RELEASES = "maven-releases";
-    private static final String REPO_NUGET_HOSTED = "nuget-hosted";
 
     @ClassRule
     public static DockerCompose compose = DockerCompose.builder()
@@ -125,8 +124,8 @@ public class IntegrationTest {
 
         // Test search by attribute
         List<Tag> result = target.path("tags")
-                .queryParam("attributes", CHANGE_ID + "=" + tag.getAttributes().get(CHANGE_ID))
-                .queryParam("attributes", STATUS + "=" + tag.getAttributes().get(STATUS))
+                .queryParam("attributes", CHANGE_ID + ":" + tag.getAttributes().get(CHANGE_ID))
+                .queryParam("attributes", STATUS + ":" + tag.getAttributes().get(STATUS))
                 .request()
                 .get(new GenericType<List<Tag>>() {});
         assertEquals(1, result.size());
@@ -139,6 +138,7 @@ public class IntegrationTest {
         Tag putResponseTag = response.readEntity(Tag.class);
         assertEquals(postResponseTag.getFirstCreated(), putResponseTag.getFirstCreated());
         assertFalse(new Date().before(putResponseTag.getLastUpdated()));
+        assertFalse(putResponseTag.getLastUpdated().before(putResponseTag.getFirstCreated()));
         assertDefinitionEquals(tag, putResponseTag);
 
         // Test deleting tag

@@ -80,9 +80,9 @@ public class AssociatedComponent {
             return false;
         AssociatedComponent that = (AssociatedComponent) o;
         return repository.equals(that.repository) &&
-               Objects.equals(group, that.group) &&
+               group.equals(that.group) &&
                name.equals(that.name) &&
-               version.equals(that.version);
+               Objects.equals(version, that.version);
     }
 
     @Override

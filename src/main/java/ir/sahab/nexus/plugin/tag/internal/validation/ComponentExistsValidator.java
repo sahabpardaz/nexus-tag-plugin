@@ -29,6 +29,9 @@ public class ComponentExistsValidator extends ConstraintValidatorSupport<Compone
 
     @Override
     public boolean isValid(AssociatedComponent value, ConstraintValidatorContext context) {
+        if (value == null) {
+            return true;
+        }
         Repository repository = repositoryManager.get(value.getRepository());
         if (repository == null) {
             log.info("Component {} is invalid as repository does not exists.", value);
