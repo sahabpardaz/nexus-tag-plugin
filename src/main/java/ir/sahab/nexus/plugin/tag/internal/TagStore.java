@@ -58,14 +58,21 @@ public class TagStore extends StateGuardLifecycleSupport {
         }
     }
 
+    /**
+     * Searches for tags with given attributes and components.
+     * @param attributes attributes to match
+     * @param componentCriteria components criteria to match on resulting tags
+     * @return list of found tags
+     */
     public List<Tag> search(Map<String, String> attributes, List<ComponentSearchCriterion> componentCriteria) {
         try (ODatabaseDocumentTx tx = dbProvider.get().acquire()) {
-            return entityAdapter.search(tx, attributes, componentCriteria)
-                    .stream()
+            return StreamSupport.stream(entityAdapter.search(tx, attributes).spliterator(), false)
+                    .filter(tag -> tag.matches(componentCriteria))
                     .map(TagEntity::toDto)
                     .collect(Collectors.toList());
         }
     }
+
 
     /**
      * Creates tag with given definition if it does not already exists, otherwise

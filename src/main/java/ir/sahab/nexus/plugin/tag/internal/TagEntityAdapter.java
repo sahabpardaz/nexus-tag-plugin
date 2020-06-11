@@ -10,13 +10,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
@@ -118,61 +116,26 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
     }
 
     /**
-     * Searches for tags with given attributes and components.
+     * Searches for tags with given attributes.
      *
      * @param tx connection to use for searching
      * @param attributes map of attribute key value pairs to search for
-     * @param componentsSearchCriteria criteria to match on associated components
      * @return found tag entities
      */
-    public List<TagEntity> search(ODatabaseDocumentTx tx, Map<String, String> attributes,
-            Collection<ComponentSearchCriterion> componentsSearchCriteria) {
+    public Iterable<TagEntity> search(ODatabaseDocumentTx tx, Map<String, String> attributes) {
         List<QueryPredicate> predicates = new ArrayList<>();
         for (Entry<String, String> entry : attributes.entrySet()) {
-            String field = ATTRIBUTES_FIELD + "[" + stringLiteral(entry.getKey()) + "]";
-            predicates.add(new QueryPredicate(field, "=", stringLiteral(entry.getValue())));
-        }
-
-        for (ComponentSearchCriterion criterion : componentsSearchCriteria) {
-            predicates.add(toQueryPredicate(criterion));
+            String field = ATTRIBUTES_FIELD + "['" + entry.getKey() + "']";
+            predicates.add(new QueryPredicate(field, "=", entry.getValue()));
         }
 
         String query = buildQuery(predicates);
-        log.debug("Searching for tags with query={}", query);
-        List<ODocument> documents = tx.query(new OSQLSynchQuery<>(query));
-        return filterByComponentCriteria(transform(documents), componentsSearchCriteria);
+        Object[] arguments = predicates.stream().map(QueryPredicate::getValue).toArray();
+        log.debug("Searching for tags with query={} and args={}", query, arguments);
+        List<ODocument> documents = tx.query(new OSQLSynchQuery<>(query), arguments);
+        return transform(documents);
     }
 
-    private static QueryPredicate toQueryPredicate(ComponentSearchCriterion criterion) {
-        List<QueryPredicate> compFieldPredicates = new ArrayList<>();
-        compFieldPredicates
-                .add(new QueryPredicate(COMPONENT_REPOSITORY_FIELD, "=", stringLiteral(criterion.getRepository())));
-        compFieldPredicates.add(new QueryPredicate(COMPONENT_GROUP_FIELD, "=", stringLiteral(criterion.getGroup())));
-        compFieldPredicates.add(new QueryPredicate(COMPONENT_NAME_FIELD, "=", stringLiteral(criterion.getName())));
-        return new QueryPredicate(COMPONENTS_FIELD, "contains", QueryPredicate.andExpression(compFieldPredicates));
-    }
-
-    /**
-     * Filters given tags by matching component criteria.
-     * @param tags tags to filter
-     * @param componentsCriteria criteria to match on associated components
-     * @return tags which has associated components regarding to version criteria
-     */
-    private List<TagEntity> filterByComponentCriteria(Iterable<TagEntity> tags,
-            Collection<ComponentSearchCriterion> componentsCriteria) {
-        List<TagEntity> filtered = StreamSupport.stream(tags.spliterator(), false)
-                .filter(tag -> tag.matches(componentsCriteria))
-                .collect(Collectors.toList());
-        log.debug("Tags {} filtered by {} component criteria, result={}", tags, componentsCriteria, filtered);
-        return filtered;
-    }
-
-    /**
-     * @return SQL string literal for given value (enclosed in single quotes)
-     */
-    private static String stringLiteral(String value) {
-        return "'" + value + "'";
-    }
 
     private static String buildQuery(List<QueryPredicate> predicates) {
         StringBuilder query = new StringBuilder("select * from ").append(DB_CLASS);
@@ -186,16 +149,20 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
     private static class QueryPredicate {
         private final String field;
         private final String operator;
-        private final String value;
+        private final Object value;
 
-        public QueryPredicate(String field, String operator, String value) {
+        public QueryPredicate(String field, String operator, Object value) {
             this.field = field;
             this.operator = operator;
             this.value = value;
         }
 
+        public Object getValue() {
+            return value;
+        }
+
         CharSequence toQueryExpression() {
-            return new StringBuilder(field).append(' ').append(operator).append(' ').append(value);
+            return new StringBuilder(field).append(' ').append(operator).append(" ?");
         }
 
         static String andExpression(List<QueryPredicate> predicates) {
