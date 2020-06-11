@@ -39,7 +39,8 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
     private static final String COMPONENT_NAME_FIELD = "name";
     private static final String COMPONENT_VERSION_FIELD = "version";
 
-    private static final String NAME_INDEX = new OIndexNameBuilder().type(DB_CLASS).property("name").build();
+    private static final String NAME_INDEX = new OIndexNameBuilder().type(DB_CLASS).property(NAME_FIELD).build();
+    private static final String ATTR_INDEX = new OIndexNameBuilder().type(DB_CLASS).property(ATTRIBUTES_FIELD).build();
 
     public TagEntityAdapter() {
         super(TYPE_NAME);
@@ -54,6 +55,7 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
         type.createProperty(COMPONENTS_FIELD, OType.EMBEDDEDLIST).setMandatory(true).setNotNull(true);
 
         type.createIndex(NAME_INDEX, INDEX_TYPE.UNIQUE, NAME_FIELD);
+        type.createIndex(ATTR_INDEX, INDEX_TYPE.NOTUNIQUE_HASH_INDEX, ATTRIBUTES_FIELD + " BY VALUE");
         type.createIndex(LAST_UPDATED_FIELD, INDEX_TYPE.NOTUNIQUE, LAST_UPDATED_FIELD);
     }
 
