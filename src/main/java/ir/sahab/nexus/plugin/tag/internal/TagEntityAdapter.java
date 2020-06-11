@@ -51,7 +51,7 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
         type.createProperty(NAME_FIELD, OType.STRING).setMandatory(true).setNotNull(true);
         type.createProperty(FIRST_CREATED_FIELD, OType.DATETIME).setMandatory(true).setNotNull(true);
         type.createProperty(LAST_UPDATED_FIELD, OType.DATETIME).setMandatory(true).setNotNull(true);
-        type.createProperty(ATTRIBUTES_FIELD, OType.EMBEDDEDMAP).setMandatory(true).setNotNull(true);
+        type.createProperty(ATTRIBUTES_FIELD, OType.EMBEDDEDMAP, OType.STRING).setMandatory(true).setNotNull(true);
         type.createProperty(COMPONENTS_FIELD, OType.EMBEDDEDLIST).setMandatory(true).setNotNull(true);
 
         type.createIndex(NAME_INDEX, INDEX_TYPE.UNIQUE, NAME_FIELD);
