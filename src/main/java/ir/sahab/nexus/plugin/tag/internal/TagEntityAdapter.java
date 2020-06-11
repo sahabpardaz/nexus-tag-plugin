@@ -138,7 +138,7 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
         }
 
         String query = buildQuery(predicates);
-        log.info("Searching for tags with query={}", query);
+        log.debug("Searching for tags with query={}", query);
         List<ODocument> documents = tx.query(new OSQLSynchQuery<>(query));
         return filterByComponentCriteria(transform(documents), componentsSearchCriteria);
     }
@@ -155,14 +155,16 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
     /**
      * Filters given tags by matching component criteria.
      * @param tags tags to filter
-     * @param componentsSearchCriteria criteria to match on associated components
+     * @param componentsCriteria criteria to match on associated components
      * @return tags which has associated components regarding to version criteria
      */
-    private static List<TagEntity> filterByComponentCriteria(Iterable<TagEntity> tags,
-            Collection<ComponentSearchCriterion> componentsSearchCriteria) {
-        return StreamSupport.stream(tags.spliterator(), false)
-                .filter(tag -> tag.matches(componentsSearchCriteria))
+    private List<TagEntity> filterByComponentCriteria(Iterable<TagEntity> tags,
+            Collection<ComponentSearchCriterion> componentsCriteria) {
+        List<TagEntity> filtered = StreamSupport.stream(tags.spliterator(), false)
+                .filter(tag -> tag.matches(componentsCriteria))
                 .collect(Collectors.toList());
+        log.debug("Tags {} filtered by {} component criteria, result={}", tags, componentsCriteria, filtered);
+        return filtered;
     }
 
     /**
@@ -184,7 +186,7 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
     private static class QueryPredicate {
         private final String field;
         private final String operator;
-        private  final String value;
+        private final String value;
 
         public QueryPredicate(String field, String operator, String value) {
             this.field = field;

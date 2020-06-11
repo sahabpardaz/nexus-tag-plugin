@@ -43,7 +43,7 @@ public class ComponentExistsValidator extends ConstraintValidatorSupport<Compone
         }
         List<Component> founds = componentStore.getAllMatchingComponents(repository, value.getGroup(), value.getName(),
                 versionAttribute);
-        log.info("Components found for {}: {}", value, founds);
+        log.debug("Components found for {}: {}", value, founds);
         return !founds.isEmpty();
     }
 }

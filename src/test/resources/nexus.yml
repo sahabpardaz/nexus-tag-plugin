@@ -6,3 +6,6 @@ services:
       - type: bind
         source: ${DIRECTORY}/../nexus-tag-plugin-1.0-SNAPSHOT.jar
         target: /opt/sonatype/nexus/deploy/nexus-tag-plugin-1.0-SNAPSHOT.jar
+      - type: bind
+        source: ${DIRECTORY}/logback-overrides.xml
+        target: /opt/sonatype/sonatype-work/nexus3/etc/logback/logback-overrides.xml
