@@ -51,5 +51,9 @@ public class ComponentSearchCriterionTest {
         assertTrue(new Version("1.0.0").compare(Operator.LT, new Version("1.1.0")));
         assertFalse(new Version("1.0.0").compare(Operator.LT, new Version("1.0.0")));
 
+        assertFalse(new Version("1.0.0").compare(Operator.EQ, new Version("1.0")));
+        assertTrue(new Version("1.1.0").compare(Operator.GT, new Version("1.0")));
+        assertTrue(new Version("1.1").compare(Operator.GT, new Version("1.0.0")));
+        assertTrue(new Version("1.0").compare(Operator.LT, new Version("1.0.1")));
     }
 }

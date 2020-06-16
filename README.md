@@ -1,8 +1,8 @@
-![](https://github.com/sahabpardaz/nexus-tag-plugin/workflows/.github/workflows/test.yml/badge.svg)
+![Build and Test](https://github.com/sahabpardaz/nexus-tag-plugin/workflows/Build%20and%20Test/badge.svg)
 # Tag Plugin for Nexus Repository OSS
 
 This plugin provides tagging support to Nexus Repository OSS 3.x. Note that this feature is available on
-Nexus Repository Pro and it has some advantage above this plugin (better support, better integration, ...). So, it's
+Nexus Repository Pro and it has some advantage over this plugin (better support, better integration, ...). So, it's
 intended to be used by whom can not buy Pro version.
 
 # Installation
@@ -13,6 +13,8 @@ For more information about installing plugins, see
 # Usage
 This plugin provides tagging functionality by exposing RESTFul API. See swagger documentation in System->API section of 
 Administration panel to see how this can be used.
+
+TODO: Add API Documentation
 
 # License
 This project is licensed under the Apache License - see the LICENSE.md file for details

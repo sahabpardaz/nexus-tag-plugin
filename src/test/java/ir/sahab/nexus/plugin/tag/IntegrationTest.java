@@ -8,6 +8,7 @@ import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import ir.sahab.dockercomposer.DockerCompose;
@@ -143,6 +144,12 @@ public class IntegrationTest {
                 .get(new GenericType<List<Tag>>() {});
         assertEquals(1, result.size());
         assertDefinitionEquals(tagDef2, result.get(0));
+
+        result = target.path("tags")
+                .queryParam("attribute", CHANGE_ID + ":" + "notExists")
+                .request()
+                .get(new GenericType<List<Tag>>() {});
+        assertTrue(result.isEmpty());
 
         // Update tag
         tagDef1.getAttributes().put(STATUS, "successful");

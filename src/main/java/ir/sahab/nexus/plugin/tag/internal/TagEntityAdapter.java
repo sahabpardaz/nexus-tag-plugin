@@ -114,7 +114,7 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
         if (identifiable == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(transformEntity(identifiable.getRecord()));
+        return Optional.of(transformEntity(identifiable.getRecord()));
     }
 
     /**
@@ -163,8 +163,8 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
             return value;
         }
 
-        CharSequence toQueryExpression() {
-            return new StringBuilder(field).append(' ').append(operator).append(" ?");
+        String toQueryExpression() {
+            return field + ' '+ operator + " ?";
         }
 
         static String andExpression(List<QueryPredicate> predicates) {
