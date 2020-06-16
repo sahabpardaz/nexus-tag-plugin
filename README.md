@@ -6,8 +6,8 @@ Nexus Repository Pro and it has some advantage over this plugin (better support,
 intended to be used by whom can not buy Pro version.
 
 # Installation
-Download the latest release and copy the jar bundle to deploy directory of target nexus repository manager.
-For more information about installing plugins, see 
+Download the latest jar bundle from [Github packages](https://github.com/sahabpardaz/nexus-tag-plugin/packages) and copy
+it to 'deploy' directory of target nexus repository manager. For more information about installing plugins, see
 "[Installing a custom Nexus 3 plugin](https://sonatype-nexus-community.github.io/nexus-development-guides/plugin-install.html)".
 
 # Usage
