@@ -72,7 +72,7 @@ public class IntegrationTest {
         uploadMavenComponent(component1);
         component2 = new AssociatedComponent(REPO_MAVEN_RELEASES, randomAlphabetic(5), "comp2", "1.1.1");
         uploadMavenComponent(component2);
-        //TODO: Test non-maven artifacts which their group are null
+        //TODO: Test non-maven artifacts which their group/version are null
     }
 
 

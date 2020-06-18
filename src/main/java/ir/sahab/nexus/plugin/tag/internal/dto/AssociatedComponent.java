@@ -21,8 +21,6 @@ public class AssociatedComponent {
     @NotBlank
     private String name;
 
-    @NotNull(message = "Components version can't be null.")
-    @NotBlank
     private String version;
 
     public AssociatedComponent() {

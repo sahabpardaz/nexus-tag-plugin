@@ -3,6 +3,7 @@ package ir.sahab.nexus.plugin.tag.internal;
 import com.google.common.annotations.VisibleForTesting;
 import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.Validate;
@@ -105,12 +106,13 @@ public class ComponentSearchCriterion {
     @VisibleForTesting
     static class Version {
         private static final Pattern PATTERN = Pattern.compile("^(\\d+)([._]\\d+)*$");
-        private final int[] subversionNumbers;
+
         private final String value;
+        private final int[] subversionNumbers;
 
         public Version(String value) {
             this.value = value;
-            subversionNumbers = PATTERN.matcher(value).matches()
+            subversionNumbers = value != null && PATTERN.matcher(value).matches()
                     ? Arrays.stream(value.split("[._]")).mapToInt(Integer::parseInt).toArray()
                     : null;
         }
@@ -121,7 +123,7 @@ public class ComponentSearchCriterion {
             }
             switch(operator) {
                 case EQ:
-                    return value.equals(other.value);
+                    return Objects.equals(value, other.value);
                 case GT:
                     return compareTo(other) > 0;
                 case LT:
