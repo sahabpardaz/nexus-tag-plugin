@@ -18,7 +18,6 @@ import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagCloneRequest;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,59 +28,62 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
-import org.apache.commons.codec.binary.Base64;
+import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataOutput;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 import org.sonatype.nexus.rest.APIConstants;
 
 public class IntegrationTest {
 
+    private static final String NEXUS_URL = "http://nexus:8081";
+    private static final String USERNAME = "admin";
+    private static final String PASSWORD = "admin123";
+    private static final String REPO_MAVEN_RELEASES = "maven-releases";
+    private static final String REPO_TEST_RAW = "test-raw";
+
     private static final String CHANGE_ID = "Change-Id";
     private static final String STATUS = "Status";
-    public static final String USERNAME = "admin";
-    public static final String PASSWORD = "admin123";
-    private static final String REPO_MAVEN_RELEASES = "maven-releases";
 
-    @ClassRule
-    public static DockerCompose compose = DockerCompose.builder()
+    private static DockerCompose compose = DockerCompose.builder()
             .file("/nexus.yml")
             .projectName("nexus-tag-plugin-test")
             .forceRecreate()
             .afterStart(WaitFor.portOpen("nexus", 8081, 1_200_000))
             .build();
 
-    private Client client;
-    private WebTarget target;
+    private static RepositoryRule repositoryRule = new RepositoryRule(NEXUS_URL, USERNAME, PASSWORD, REPO_TEST_RAW);
 
-    private AssociatedComponent component1;
-    private AssociatedComponent component2;
+    @ClassRule
+    public static RuleChain ruleChain = RuleChain.outerRule(compose).around(repositoryRule);
+    
+    private static Client client;
+    private static WebTarget target;
 
-    @Before
-    public void setup() {
-        client = ClientBuilder.newClient();
-        target = client.target("http://nexus:8081/service/rest" + APIConstants.V1_API_PREFIX);
+    private static AssociatedComponent component1;
+    private static AssociatedComponent component2;
+    private static AssociatedComponent component3;
+
+    @BeforeClass
+    public static void setup() {
+        client = ClientBuilder.newClient().register(new BasicAuthentication(USERNAME, PASSWORD));
+        target = client.target(NEXUS_URL).path("/service/rest" + APIConstants.V1_API_PREFIX);
         component1 = new AssociatedComponent(REPO_MAVEN_RELEASES, randomAlphabetic(5), "comp1", "3");
         uploadMavenComponent(component1);
         component2 = new AssociatedComponent(REPO_MAVEN_RELEASES, randomAlphabetic(5), "comp2", "1.1.1");
         uploadMavenComponent(component2);
-        //TODO: Test non-maven artifacts which their group/version are null
+        component3 = new AssociatedComponent(REPO_TEST_RAW, "/test", "test/" + randomAlphabetic(5), null);
+        uploadRawComponent(component3);
     }
 
-
-    @After
-    public void tearDown() {
-        client.close();
-    }
-
-    private void uploadMavenComponent(AssociatedComponent component) {
+    private static void uploadMavenComponent(AssociatedComponent component) {
         MultipartFormDataOutput output = new MultipartFormDataOutput();
         output.addFormData("maven2.groupId", component.getGroup(), MediaType.TEXT_PLAIN_TYPE);
         output.addFormData("maven2.artifactId", component.getName(), MediaType.TEXT_PLAIN_TYPE);
@@ -93,24 +95,31 @@ public class IntegrationTest {
 
         Response response = target.path("components").queryParam("repository", component.getRepository())
                 .request()
-                .header(HttpHeaders.AUTHORIZATION, authorizationHeader())
                 .post(Entity.entity(output, MediaType.MULTIPART_FORM_DATA_TYPE));
         assertEquals(Family.SUCCESSFUL, response.getStatusInfo().getFamily());
+        response.close();
     }
 
-    /**
-     * @return authorization header of basic authentication
-     */
-    private static String authorizationHeader() {
-        String auth = USERNAME + ":" + PASSWORD;
-        byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.ISO_8859_1));
-        return "Basic " + new String(encodedAuth);
+    private static void uploadRawComponent(AssociatedComponent component) {
+        MultipartFormDataOutput output = new MultipartFormDataOutput();
+        output.addFormData("raw.directory", component.getGroup(), MediaType.TEXT_PLAIN_TYPE);
+        String fileName = component.getName().substring(component.getGroup().length());
+        output.addFormData("raw.asset1.filename", fileName, MediaType.TEXT_PLAIN_TYPE);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(randomAlphabetic(10).getBytes());
+        output.addFormData("raw.asset1", inputStream, MediaType.APPLICATION_OCTET_STREAM_TYPE, component.getName());
+
+        Response response = target.path("components").queryParam("repository", component.getRepository())
+                .request()
+                .post(Entity.entity(output, MediaType.MULTIPART_FORM_DATA_TYPE));
+        assertEquals(Family.SUCCESSFUL, response.getStatusInfo().getFamily());
+        response.close();
     }
 
     @Test
     public void testCrud() {
         // Add Tags
-        TagDefinition tagDef1 = new TagDefinition(randomAlphanumeric(5), createAttributes(), Arrays.asList(component1));
+        TagDefinition tagDef1 =
+                new TagDefinition(randomAlphanumeric(5), createAttributes(), Arrays.asList(component1, component3));
         Tag createdTag1 = addTagAndAssert(tagDef1);
 
         TagDefinition tagDef2 = new TagDefinition(randomAlphanumeric(5), createAttributes(),
@@ -124,10 +133,13 @@ public class IntegrationTest {
         // Test search by attribute and component
         String component1Criterion = String.format("%s:%s:%s = %s", component1.getRepository(), component1.getGroup(),
                 component1.getName(), component1.getVersion());
+        String component3Criterion =
+                String.format("%s:%s:%s", component3.getRepository(), component3.getGroup(), component3.getName());
         List<Tag> result = target.path("tags")
                 .queryParam("attribute", CHANGE_ID + ":" + tagDef1.getAttributes().get(CHANGE_ID))
                 .queryParam("attribute", STATUS + ":" + tagDef1.getAttributes().get(STATUS))
                 .queryParam("associatedComponent", component1Criterion)
+                .queryParam("associatedComponent", component3Criterion)
                 .request()
                 .get(new GenericType<List<Tag>>() {});
         assertEquals(1, result.size());
@@ -154,18 +166,19 @@ public class IntegrationTest {
         // Update tag
         tagDef1.getAttributes().put(STATUS, "successful");
         tagDef1.setComponents(Arrays.asList(component1, component2));
-        Response response = updateTag(tagDef1);
-        Tag putResponseTag = response.readEntity(Tag.class);
+        Tag putResponseTag = updateTag(tagDef1);
         assertEquals(createdTag1.getFirstCreated(), putResponseTag.getFirstCreated());
         assertFalse(new Date().before(putResponseTag.getLastUpdated()));
         assertFalse(putResponseTag.getLastUpdated().before(putResponseTag.getFirstCreated()));
         assertDefinitionEquals(tagDef1, putResponseTag);
 
         // Test deleting tag
-        response = target.path("tags/" + tagDef1.getName()).request().delete();
+        Response response = target.path("tags/" + tagDef1.getName()).request().delete();
         assertEquals(Family.SUCCESSFUL, response.getStatusInfo().getFamily());
+        response.close();
         response = target.path("tags/" + tagDef1.getName()).request().get();
         assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
+        response.close();
     }
 
 
@@ -240,13 +253,21 @@ public class IntegrationTest {
         return target.path("tags").request().post(Entity.entity(tag, MediaType.APPLICATION_JSON_TYPE));
     }
 
-    private Response updateTag(TagDefinition tag) {
-        return target.path("tags/" + tag.getName()).request().put(Entity.entity(tag, MediaType.APPLICATION_JSON_TYPE));
+    private Tag updateTag(TagDefinition tag) {
+        Response response =
+                target.path("tags/" + tag.getName()).request().put(Entity.entity(tag, MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(Family.SUCCESSFUL, response.getStatusInfo().getFamily());
+        return response.readEntity(Tag.class);
     }
 
     private void assertDefinitionEquals(TagDefinition expected, Tag actual) {
         assertEquals(expected.getName(), actual.getName());
         assertEquals(expected.getAttributes(), actual.getAttributes());
         assertEquals(expected.getComponents(), actual.getComponents());
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        client.close();
     }
 }

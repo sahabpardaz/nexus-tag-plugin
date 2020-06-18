@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Changes plugin log level inside nexus repository manager -->
 <configuration>
   <logger name="ir.sahab.nexus.plugin.tag" level="DEBUG"/>
 </configuration>

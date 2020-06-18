@@ -20,10 +20,17 @@ public class ComponentSearchCriterionTest {
 
         criterion = ComponentSearchCriterion.parse("r2::n2 =< 10.1");
         assertEquals("r2", criterion.getRepository());
-        assertEquals("", criterion.getGroup());
+        assertNull(criterion.getGroup());
         assertEquals("n2", criterion.getName());
         assertEquals(Operator.LTE, criterion.getVersionOperator());
         assertEquals("10.1", criterion.getVersionValue());
+
+        criterion = ComponentSearchCriterion.parse("r3:g3:n3");
+        assertEquals("r3", criterion.getRepository());
+        assertEquals("g3", criterion.getGroup());
+        assertEquals("n3", criterion.getName());
+        assertNull(criterion.getVersionOperator());
+        assertNull(criterion.getVersionValue());
     }
 
     @Test
@@ -34,9 +41,13 @@ public class ComponentSearchCriterionTest {
         assertFalse(criterion.matches(new AssociatedComponent("r1", "", "n1", "2")));
         assertFalse(criterion.matches(new AssociatedComponent("r1", "g1", "n2", "2")));
 
-        criterion = ComponentSearchCriterion.parse("r1:g1:n1 = 3");
+        criterion = ComponentSearchCriterion.parse("r1::n1 = 3");
         assertFalse(criterion.matches(new AssociatedComponent("r1", "g1", "n1", "2")));
-        assertTrue(criterion.matches(new AssociatedComponent("r1", "g1", "n1", "3")));
+        assertTrue(criterion.matches(new AssociatedComponent("r1", null, "n1", "3")));
+
+        criterion = ComponentSearchCriterion.parse("r1:g1:n1 = alpha");
+        assertFalse(criterion.matches(new AssociatedComponent("r1", "g1", "n1", "2")));
+        assertTrue(criterion.matches(new AssociatedComponent("r1", "g1", "n1", "alpha")));
     }
 
     @Test

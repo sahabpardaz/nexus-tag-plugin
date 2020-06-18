@@ -13,8 +13,8 @@ import org.apache.commons.lang3.Validate;
  */
 public class ComponentSearchCriterion {
 
-    private static final Pattern PATTERN = Pattern.compile(
-            "^(?<repository>\\S+):(?<group>\\S*):(?<name>\\S+)(\\s+)(?<operator>=|>=|=<|<|>)(\\s+)(?<version>\\S+)$");
+    private static final Pattern PATTERN = Pattern.compile("^(?<repository>\\S+):(?<group>\\S+)?:(?<name>\\S+)"
+            + "(?<versionexp>(\\s+)(?<operator>=|>=|=<|<|>)(\\s+)(?<version>\\S+))?$");
 
     private String repository;
 
@@ -66,16 +66,20 @@ public class ComponentSearchCriterion {
         String repository = matcher.group("repository");
         String group = matcher.group("group");
         String name = matcher.group("name");
-        Operator versionOperator = Operator.parse(matcher.group("operator"));
-        String versionValue = matcher.group("version");
+        Operator versionOperator = null;
+        String versionValue = null;
+        if (matcher.group("versionexp") != null) {
+            versionOperator = Operator.parse(matcher.group("operator"));
+            versionValue = matcher.group("version");
+        }
         return new ComponentSearchCriterion(repository, group, name, versionOperator, versionValue);
     }
 
     public boolean matches(AssociatedComponent component) {
         return repository.equals(component.getRepository())
-                && group.equals(component.getGroup())
+                && Objects.equals(group, component.getGroup())
                 && name.equals(component.getName())
-                && new Version(component.getVersion()).compare(versionOperator, version);
+                && (versionOperator == null || new Version(component.getVersion()).compare(versionOperator, version));
     }
 
     enum Operator {

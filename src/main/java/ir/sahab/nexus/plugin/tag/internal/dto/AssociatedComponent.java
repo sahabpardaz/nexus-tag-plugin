@@ -11,14 +11,12 @@ import org.hibernate.validator.constraints.NotBlank;
 @ComponentExists
 public class AssociatedComponent {
 
-    @NotNull(message = "Components repository can't be null.")
-    @NotBlank(message = "Repository can't be blank.")
+    @NotBlank(message = "Component repository can't be null/blank.")
     private String repository;
 
     private String group;
 
-    @NotNull(message = "Components name can't be null.")
-    @NotBlank
+    @NotBlank(message = "Components name can't be null/blank.")
     private String name;
 
     private String version;
