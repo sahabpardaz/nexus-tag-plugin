@@ -1,17 +1,14 @@
 package ir.sahab.nexus.plugin.tag.internal.validation;
 
 import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.validation.ConstraintValidatorContext;
 import org.sonatype.nexus.repository.Repository;
 import org.sonatype.nexus.repository.manager.RepositoryManager;
-import org.sonatype.nexus.repository.storage.Component;
-import org.sonatype.nexus.repository.storage.ComponentStore;
+import org.sonatype.nexus.repository.storage.StorageFacet;
+import org.sonatype.nexus.repository.storage.StorageTx;
 import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 
 @Named
@@ -19,12 +16,10 @@ import org.sonatype.nexus.validation.ConstraintValidatorSupport;
 public class ComponentExistsValidator extends ConstraintValidatorSupport<ComponentExists, AssociatedComponent> {
 
     private final RepositoryManager repositoryManager;
-    private final ComponentStore componentStore;
 
     @Inject
-    public ComponentExistsValidator(RepositoryManager repositoryManager, ComponentStore componentStore) {
+    public ComponentExistsValidator(RepositoryManager repositoryManager) {
         this.repositoryManager = repositoryManager;
-        this.componentStore = componentStore;
     }
 
     @Override
@@ -37,13 +32,14 @@ public class ComponentExistsValidator extends ConstraintValidatorSupport<Compone
             log.info("Component {} is invalid as repository does not exists.", value);
             return false;
         }
-        Map<String, String> versionAttribute = new HashMap<>();
-        if (value.getVersion() != null && !value.getVersion().isEmpty()) {
-            versionAttribute.put("version", value.getVersion());
+        try (StorageTx storageTx = repository.facet(StorageFacet.class).txSupplier().get()) {
+            storageTx.begin();
+            boolean exists =
+                    storageTx.componentExists(value.getGroup(), value.getName(), value.getVersion(), repository);
+            if (!exists) {
+                log.info("Component {} not found.", value);
+            }
+            return exists;
         }
-        List<Component> founds = componentStore.getAllMatchingComponents(repository, value.getGroup(), value.getName(),
-                versionAttribute);
-        log.debug("Components found for {}: {}", value, founds);
-        return !founds.isEmpty();
     }
 }

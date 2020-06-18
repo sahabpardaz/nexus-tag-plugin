@@ -12,18 +12,18 @@ import org.hibernate.validator.constraints.NotBlank;
 public class AssociatedComponent {
 
     @NotNull(message = "Components repository can't be null.")
-    @NotBlank
+    @NotBlank(message = "Repository can't be blank.")
     private String repository;
 
-    @NotNull
     private String group;
 
     @NotNull(message = "Components name can't be null.")
     @NotBlank
     private String name;
 
+    @NotNull(message = "Components version can't be null.")
+    @NotBlank
     private String version;
-
 
     public AssociatedComponent() {
         // Used by Jackson

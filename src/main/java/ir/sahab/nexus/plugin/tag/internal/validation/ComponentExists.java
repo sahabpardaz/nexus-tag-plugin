@@ -19,7 +19,7 @@ import javax.validation.Payload;
 @Documented
 public @interface ComponentExists {
 
-    String message() default "Associated component does not exists";
+    String message() default "Associated component does not exist";
 
     Class<?>[] groups() default { };
 

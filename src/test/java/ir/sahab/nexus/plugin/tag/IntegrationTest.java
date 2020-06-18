@@ -72,7 +72,7 @@ public class IntegrationTest {
         uploadMavenComponent(component1);
         component2 = new AssociatedComponent(REPO_MAVEN_RELEASES, randomAlphabetic(5), "comp2", "1.1.1");
         uploadMavenComponent(component2);
-        //TODO: Test non-maven artifacts which does not have group/version
+        //TODO: Test non-maven artifacts which their group are null
     }
 
 
@@ -218,16 +218,9 @@ public class IntegrationTest {
         response.close();
 
         AssociatedComponent notExistingRepoComponent =
-                new AssociatedComponent("not-existing-repo", "", "not-exist-artifact", "some-version");
+                new AssociatedComponent("not-existing-repo", null, "not-exist-artifact", "some-version");
         TagDefinition withNonExistingComponent =
                 new TagDefinition("name", emptyMap(), singletonList(notExistingRepoComponent));
-        response = addTag(withNonExistingComponent);
-        assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-        response.close();
-
-        AssociatedComponent notExistingComponent =
-                new AssociatedComponent(REPO_MAVEN_RELEASES, "", "not-exist-artifact", "some-version");
-        withNonExistingComponent = new TagDefinition("name", emptyMap(), singletonList(notExistingComponent));
         response = addTag(withNonExistingComponent);
         assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         response.close();
