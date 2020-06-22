@@ -11,7 +11,7 @@
 
     <groupId>ir.sahab</groupId>
     <artifactId>nexus-tag-plugin</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <packaging>bundle</packaging>
 
@@ -76,6 +76,13 @@
     </dependencies>
 
     <build>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.felix</groupId>
