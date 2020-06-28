@@ -10,12 +10,18 @@
 
     <packaging>bundle</packaging>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <nexus.version>3.15.1-01</nexus.version>
+        <test.target.nexus.version>3.15.1</test.target.nexus.version>
+    </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.sonatype.nexus.plugins</groupId>
                 <artifactId>nexus-plugins</artifactId>
-                <version>3.15.1-01</version>
+                <version>${nexus.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -108,6 +114,8 @@
                 <extensions>true</extensions> <!-- Support Bundle Packaging -->
                 <configuration>
                     <instructions>
+                        <!-- Relax dependency version in order to allow run inside multiple versions of nexus -->
+                        <_consumer-policy>$(version;==)</_consumer-policy>
                         <!-- include all content in the output directory -->
                         <Include-Resource>
                             /=${project.build.outputDirectory},{maven-resources}
@@ -141,6 +149,9 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <systemProperties>
+                        <nexus.version>${test.target.nexus.version}</nexus.version>
+                    </systemProperties>
                     <includes>
                         <include>**/IntegrationTest.java</include>
                     </includes>

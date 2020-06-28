@@ -1,5 +1,7 @@
 package ir.sahab.nexus.plugin.tag;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -10,6 +12,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Provider;
 import org.jboss.resteasy.client.jaxrs.BasicAuthentication;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
@@ -42,7 +46,9 @@ public class RepositoryRule extends ExternalResource {
      */
     public RepositoryRule(String nexusUrl, String username, String password, String repositoryName) {
         this.repositoryName = repositoryName;
-        client = ClientBuilder.newClient().register(new BasicAuthentication(username, password));
+        client = ClientBuilder.newClient()
+                .register(ObjectMapperContextResolver.class)
+                .register(new BasicAuthentication(username, password));
         apiTarget = client.target(nexusUrl).path("/service/rest" + APIConstants.V1_API_PREFIX);
     }
 
@@ -109,5 +115,17 @@ public class RepositoryRule extends ExternalResource {
     @Override
     protected void after() {
         client.close();
+    }
+
+    @Provider
+    public static class ObjectMapperContextResolver implements ContextResolver<ObjectMapper> {
+
+        @Override
+        public ObjectMapper getContext(Class<?> type) {
+            ObjectMapper mapper = new ObjectMapper();
+            // RepositoryXO has new properties in newer versions of nexus
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            return mapper;
+        }
     }
 }
