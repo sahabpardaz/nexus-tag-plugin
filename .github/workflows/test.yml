@@ -24,5 +24,7 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Build and verify with Maven
+      - name: Build and verify with default nexus version
         run: mvn -B verify --file pom.xml
+      - name: Build and verify with nexus 3.24.0
+        run: mvn -B  -Dtest.target.nexus.version=3.24.0 verify --file pom.xml

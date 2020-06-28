@@ -88,12 +88,14 @@ Accept: application/json
 ```
 
 # Compatibility
-Minimum supported version of nexus is 3.15.1-01 at the moment. For now, we just test plugin with this version
-only. Plugin may work with newer versions, but it hasn't been tested yet.
+Minimum supported version of nexus is 3.15.1-01 at the moment. These versions have been tested:
+* 3.15.1
+* 3.24.0
+
+Plugin may work with other versions, but it hasn't been tested yet.
 
 # License
 This project is licensed under the Apache License - see the LICENSE.md file for details
 
 # Future Works
 * Secure API by adding authentication and authorization.
-* Test plugin with multiple versions of Nexus.

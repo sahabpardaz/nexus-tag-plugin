@@ -1,7 +1,7 @@
 version: "3.2"
 services:
-  nexus:
-    image: sonatype/nexus3:3.15.1
+  nexus-${test.target.nexus.version}:
+    image: sonatype/nexus3:${test.target.nexus.version}
     volumes:
       - type: bind
         source: ${DIRECTORY}/../nexus-tag-plugin-${project.version}.jar
@@ -9,3 +9,10 @@ services:
       - type: bind
         source: ${DIRECTORY}/logback-overrides.xml
         target: /opt/sonatype/sonatype-work/nexus3/etc/logback/logback-overrides.xml
+        # Nexus >= 3.17.0 uses this file as default admin password
+      - type: bind
+        source: ${DIRECTORY}/admin.password
+        target: /nexus-data/admin.password
+      - type: bind
+        source: ${DIRECTORY}/nexus.properties
+        target: /nexus-data/etc/nexus.properties

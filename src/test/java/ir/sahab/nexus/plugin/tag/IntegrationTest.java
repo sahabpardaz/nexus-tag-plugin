@@ -43,7 +43,6 @@ import org.sonatype.nexus.rest.APIConstants;
 
 public class IntegrationTest {
 
-    private static final String NEXUS_URL = "http://nexus:8081";
     private static final String USERNAME = "admin";
     private static final String PASSWORD = "admin123";
     private static final String REPO_MAVEN_RELEASES = "maven-releases";
@@ -52,18 +51,23 @@ public class IntegrationTest {
     private static final String CHANGE_ID = "Change-Id";
     private static final String STATUS = "Status";
 
+    private static final String NEXUS_VERSION = System.getProperty("nexus.version");
+    private static final String SERVICE_NAME = "nexus-" + NEXUS_VERSION;
+    private static final String NEXUS_URL = "http://" + SERVICE_NAME + ":8081";
+
     private static DockerCompose compose = DockerCompose.builder()
             .file("/nexus.yml")
             .projectName("nexus-tag-plugin-test")
             .forceRecreate()
-            .afterStart(WaitFor.portOpen("nexus", 8081, 1_200_000))
+            .forceDown()
+            .afterStart(WaitFor.portOpen(SERVICE_NAME, 8081, 1_200_000))
             .build();
 
     private static RepositoryRule repositoryRule = new RepositoryRule(NEXUS_URL, USERNAME, PASSWORD, REPO_TEST_RAW);
 
     @ClassRule
     public static RuleChain ruleChain = RuleChain.outerRule(compose).around(repositoryRule);
-    
+
     private static Client client;
     private static WebTarget target;
 
@@ -268,6 +272,7 @@ public class IntegrationTest {
 
     @AfterClass
     public static void tearDown() {
+        repositoryRule.after();
         client.close();
     }
 }
