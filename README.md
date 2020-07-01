@@ -11,7 +11,7 @@ it to 'deploy' directory of target nexus repository manager. For more informatio
 "[Installing a custom Nexus 3 plugin](https://sonatype-nexus-community.github.io/nexus-development-guides/plugin-install.html)".
 
 # Usage
-This plugin provides tagging functionality by exposing RESTFul API. Each tag has a unique name and, a set of attributes. 
+This plugin provides tagging functionality by exposing RESTFul API. Each tag has a unique name and, a set of attributes.
 It can be associated with one or more existing components (artifacts) in nexus. Stored tags can be searched via RESTFul
 API. Search API supports searching tags by attributes or associated components. APIs can be called
 manually in 'System->API' section of Administration panel.
@@ -37,17 +37,17 @@ Content-Type: application/json
           "version": "1"
         }
     ]
-} 
+}
 ```
 
 Searching tags:
 ```
-GET http://127.0.0.1:8081/service/rest/v1/tags?attribute=status%3Asuccessful&associatedComponent=repo1%3Agr1%3Acomp1%20%3E%3D%201
+GET http://127.0.0.1:8081/service/rest/v1/tags?attribute=status:successful&associatedComponent=repo1:gr1:comp1 >= 1
 
 Accept: application/json
 ```
 Tags can be searched by attributes or associated components. Attribute filter can be added using 'attribute' query
-parameter. Parameter format is: key:value. Multiple filters can be added by defining multiple parameters. 
+parameter. Parameter format is: key:value. Multiple filters can be added by defining multiple parameters.
 
 Components can be searched via one or more 'associatedComponent' query parameter. Parameter format is
 'repository:group:name op version'. e.g. repo1:gr1:n1 > 1.0.0 adds a filter to search in order to match tags that has an
@@ -88,9 +88,9 @@ Accept: application/json
 ```
 
 # Compatibility
-Minimum supported version of nexus is 3.15.1-01 at the moment. At the moment, we just test plugin with this version 
+Minimum supported version of nexus is 3.15.1-01 at the moment. For now, we just test plugin with this version
 only. Plugin may work with newer versions, but it hasn't been tested yet.
- 
+
 # License
 This project is licensed under the Apache License - see the LICENSE.md file for details
 
