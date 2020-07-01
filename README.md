@@ -95,6 +95,5 @@ only. Plugin may work with newer versions, but it hasn't been tested yet.
 This project is licensed under the Apache License - see the LICENSE.md file for details
 
 # Future Works
-* Add support for searching tags by associated components.
 * Secure API by adding authentication and authorization.
-* Add release workflow to publish artifact to github packages.
+* Test plugin with multiple versions of Nexus.
