@@ -272,7 +272,6 @@ public class IntegrationTest {
 
     @AfterClass
     public static void tearDown() {
-        repositoryRule.after();
         client.close();
     }
 }

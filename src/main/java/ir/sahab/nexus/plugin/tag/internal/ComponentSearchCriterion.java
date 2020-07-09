@@ -62,7 +62,7 @@ public class ComponentSearchCriterion {
      */
     public static ComponentSearchCriterion parse(String expression) {
         Matcher matcher = PATTERN.matcher(expression);
-        Validate.isTrue(matcher.matches(), "Invalid component criterion: {}", expression);
+        Validate.isTrue(matcher.matches(), "Invalid component criterion: %s", expression);
         String repository = matcher.group("repository");
         String group = matcher.group("group");
         String name = matcher.group("name");

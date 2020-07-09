@@ -6,7 +6,7 @@
 
     <groupId>ir.sahab</groupId>
     <artifactId>nexus-tag-plugin</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 
     <packaging>bundle</packaging>
 
@@ -115,7 +115,7 @@
                 <configuration>
                     <instructions>
                         <!-- Relax dependency version in order to allow run inside multiple versions of nexus -->
-                        <_consumer-policy>$(version;==)</_consumer-policy>
+                        <_consumer-policy>$${version;==}</_consumer-policy>
                         <!-- include all content in the output directory -->
                         <Include-Resource>
                             /=${project.build.outputDirectory},{maven-resources}
