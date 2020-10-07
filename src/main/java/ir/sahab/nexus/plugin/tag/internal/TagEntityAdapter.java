@@ -10,11 +10,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.sonatype.nexus.orient.DatabaseInstance;
 import org.sonatype.nexus.orient.OClassNameBuilder;
 import org.sonatype.nexus.orient.OIndexNameBuilder;
 import org.sonatype.nexus.orient.entity.IterableEntityAdapter;
@@ -26,7 +28,7 @@ public class TagEntityAdapter extends IterableEntityAdapter<TagEntity> {
 
     private static final String TYPE_NAME = "tag";
 
-    private static final String DB_CLASS = new OClassNameBuilder().type(TYPE_NAME).build();
+    static final String DB_CLASS = new OClassNameBuilder().type(TYPE_NAME).build();
 
     private static final String NAME_FIELD = "name";
     private static final String ATTRIBUTES_FIELD = "attributes";

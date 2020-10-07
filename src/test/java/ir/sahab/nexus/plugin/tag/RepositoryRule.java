@@ -19,9 +19,9 @@ import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.nexus.repository.rest.api.RepositoryXO;
-import org.sonatype.nexus.repository.storage.WritePolicy;
 import org.sonatype.nexus.rest.APIConstants;
 import org.sonatype.nexus.script.ScriptXO;
+import org.testcontainers.containers.GenericContainer;
 
 /**
  * Creates a repository inside nexus repository manager if it does not already exists. This rule does 'not' remove
@@ -34,26 +34,29 @@ public class RepositoryRule extends ExternalResource {
     private static final String SCRIPT_API_PATH = "script";
     private static final String SCRIPT_NAME = "create_test_raw_repo";
 
-    private final Client client;
-    private final WebTarget apiTarget;
+    private final GenericContainer<?> nexusContainer;
     private final String repositoryName;
+    private final Client client;
 
+    private WebTarget apiTarget;
     /**
-     * @param nexusUrl URL of nexus repository
+     * @param nexusContainer nexus container to create repository in
      * @param username username to use for API authentication
      * @param password password to use for API authentication
      * @param repositoryName name of raw repository to create
      */
-    public RepositoryRule(String nexusUrl, String username, String password, String repositoryName) {
+    public RepositoryRule(GenericContainer<?> nexusContainer, String username, String password, String repositoryName) {
+        this.nexusContainer = nexusContainer;
         this.repositoryName = repositoryName;
         client = ClientBuilder.newClient()
                 .register(ObjectMapperContextResolver.class)
                 .register(new BasicAuthentication(username, password));
-        apiTarget = client.target(nexusUrl).path("/service/rest" + APIConstants.V1_API_PREFIX);
     }
 
     @Override
     protected void before() {
+        apiTarget = client.target(NexusContainerUtil.getNexusBaseUrl(nexusContainer))
+                .path("/service/rest" + APIConstants.V1_API_PREFIX);
         if (repositoryExist()) {
             log.info("Repository {} already exists.", repositoryName);
             return;
@@ -91,11 +94,7 @@ public class RepositoryRule extends ExternalResource {
     }
 
     private ScriptXO scriptRequest() {
-        String blobName = "default";
-        boolean strictContentTypeValidation = false;
-        String content = String.format("repository.createRawHosted(args, '%s', %b, %s.%s)", blobName,
-                strictContentTypeValidation, WritePolicy.class.getName(), WritePolicy.ALLOW.name());
-        return new ScriptXO(SCRIPT_NAME, content, "groovy");
+        return new ScriptXO(SCRIPT_NAME, "repository.createRawHosted(args)", "groovy");
     }
 
 

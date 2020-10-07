@@ -11,8 +11,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
-import ir.sahab.dockercomposer.DockerCompose;
-import ir.sahab.dockercomposer.WaitFor;
 import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
 import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagCloneRequest;
@@ -40,6 +38,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.sonatype.nexus.rest.APIConstants;
+import org.testcontainers.containers.GenericContainer;
 
 public class IntegrationTest {
 
@@ -51,22 +50,14 @@ public class IntegrationTest {
     private static final String CHANGE_ID = "Change-Id";
     private static final String STATUS = "Status";
 
-    private static final String NEXUS_VERSION = System.getProperty("nexus.version");
-    private static final String SERVICE_NAME = "nexus-" + NEXUS_VERSION;
-    private static final String NEXUS_URL = "http://" + SERVICE_NAME + ":8081";
 
-    private static DockerCompose compose = DockerCompose.builder()
-            .file("/nexus.yml")
-            .projectName("nexus-tag-plugin-test")
-            .forceRecreate()
-            .forceDown()
-            .afterStart(WaitFor.portOpen(SERVICE_NAME, 8081, 1_200_000))
-            .build();
+    private static GenericContainer<?> container =
+            NexusContainerUtil.createTestContainer(System.getProperty("nexusVersion"));
 
-    private static RepositoryRule repositoryRule = new RepositoryRule(NEXUS_URL, USERNAME, PASSWORD, REPO_TEST_RAW);
+    private static RepositoryRule repositoryRule = new RepositoryRule(container, USERNAME, PASSWORD, REPO_TEST_RAW);
 
     @ClassRule
-    public static RuleChain ruleChain = RuleChain.outerRule(compose).around(repositoryRule);
+    public static RuleChain ruleChain = RuleChain.outerRule(container).around(repositoryRule);
 
     private static Client client;
     private static WebTarget target;
@@ -78,7 +69,9 @@ public class IntegrationTest {
     @BeforeClass
     public static void setup() {
         client = ClientBuilder.newClient().register(new BasicAuthentication(USERNAME, PASSWORD));
-        target = client.target(NEXUS_URL).path("/service/rest" + APIConstants.V1_API_PREFIX);
+        target = client.target(NexusContainerUtil.getNexusBaseUrl(container))
+                .path("/service/rest")
+                .path(APIConstants.V1_API_PREFIX);
         component1 = new AssociatedComponent(REPO_MAVEN_RELEASES, randomAlphabetic(5), "comp1", "3");
         uploadMavenComponent(component1);
         component2 = new AssociatedComponent(REPO_MAVEN_RELEASES, randomAlphabetic(5), "comp2", "1.1.1");

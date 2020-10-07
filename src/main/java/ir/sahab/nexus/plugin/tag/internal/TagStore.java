@@ -8,11 +8,14 @@ import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
 import ir.sahab.nexus.plugin.tag.internal.exception.TagAlreadyExistsException;
 import ir.sahab.nexus.plugin.tag.internal.exception.TagNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.inject.Inject;
@@ -22,6 +25,8 @@ import javax.inject.Singleton;
 import org.sonatype.nexus.common.app.ManagedLifecycle;
 import org.sonatype.nexus.common.stateguard.StateGuardLifecycleSupport;
 import org.sonatype.nexus.orient.DatabaseInstance;
+import org.sonatype.nexus.orient.DatabaseInstanceNames;
+import org.sonatype.nexus.orient.DatabaseManager;
 
 /**
  * Acts as a facade for storing and retrieving tags into database.
@@ -32,19 +37,55 @@ import org.sonatype.nexus.orient.DatabaseInstance;
 public class TagStore extends StateGuardLifecycleSupport {
 
     private final Provider<DatabaseInstance> dbProvider;
+    private final DatabaseManager databaseManager;
     private final TagEntityAdapter entityAdapter;
 
     @Inject
-    public TagStore(Provider<DatabaseInstance> dbProvider, TagEntityAdapter entityAdapter) {
+    public TagStore(@Named(TagDatabase.NAME) Provider<DatabaseInstance> dbProvider, DatabaseManager databaseManager,
+            TagEntityAdapter entityAdapter) {
         this.dbProvider = dbProvider;
+        this.databaseManager = databaseManager;
         this.entityAdapter = entityAdapter;
     }
 
+    /**
+     * Prior to v1.0.3, plugin didn't have a specific database and used first injected database. This method migrates
+     * existing data in nexus database into tag database if exist. TODO: Remove migration in next major release.
+     */
     @Override
     protected void doStart() {
-        try (ODatabaseDocumentTx tx = dbProvider.get().acquire()) {
+        List<TagEntity> tagsToMigrate = new ArrayList<>();
+        Set<String> cleanupDatabases = new HashSet<>();
+        for (String databaseName : DatabaseInstanceNames.DATABASE_NAMES) {
+            try (ODatabaseDocumentTx tx = databaseManager.instance(databaseName).acquire()) {
+                if (tx.getMetadata().getSchema().existsClass(TagEntityAdapter.DB_CLASS)) {
+                    cleanupDatabases.add(databaseName);
+                    log.info("Tag class exists in {} db, all tags will be migrated into tag database.", databaseName);
+                    List<TagEntity> tags =
+                            StreamSupport.stream(entityAdapter.search(tx, Collections.emptyMap()).spliterator(), false)
+                                    .collect(Collectors.toList());
+                    tagsToMigrate.addAll(tags);
+                }
+            }
+        }
+        try (ODatabaseDocumentTx tx = dbProvider.get().connect()) {
             entityAdapter.register(tx);
-            log.info("Tag entity adapter registered.");
+            log.info("Tag entity adapter registered into {} db.", tx.getName());
+            if (!tagsToMigrate.isEmpty()) {
+                log.info("Importing {} tags from {} database.", tagsToMigrate.size(), cleanupDatabases);
+                for (TagEntity tag : tagsToMigrate) {
+                    if (!entityAdapter.findByName(tx, tag.getName()).isPresent()) {
+                        entityAdapter.addEntity(tx, tag);
+                    }
+                }
+                log.info("{} tags imported into tag database.", tagsToMigrate.size());
+            }
+        }
+        for (String database : cleanupDatabases) {
+            try (ODatabaseDocumentTx tx = databaseManager.instance(database).connect()) {
+                tx.getMetadata().getSchema().dropClass(TagEntityAdapter.DB_CLASS);
+                log.info("{} dropped in {} database.", TagEntityAdapter.DB_CLASS, database);
+            }
         }
     }
 
@@ -65,7 +106,7 @@ public class TagStore extends StateGuardLifecycleSupport {
      * @return list of found tags
      */
     public List<Tag> search(Map<String, String> attributes, List<ComponentSearchCriterion> componentCriteria) {
-        try (ODatabaseDocumentTx tx = dbProvider.get().acquire()) {
+        try (ODatabaseDocumentTx tx = dbProvider.get().acquire().begin()) {
             return StreamSupport.stream(entityAdapter.search(tx, attributes).spliterator(), false)
                     .filter(tag -> tag.matches(componentCriteria))
                     .map(TagEntity::toDto)
@@ -82,7 +123,7 @@ public class TagStore extends StateGuardLifecycleSupport {
      */
     public Tag addOrUpdate(TagDefinition definition) {
         log.info("Adding or updating tag: {}", definition);
-        try (ODatabaseDocumentTx tx = dbProvider.get().acquire()) {
+        try (ODatabaseDocumentTx tx = dbProvider.get().acquire().begin()) {
             Date currentDate = new Date();
             Optional<TagEntity> existing = entityAdapter.findByName(tx, definition.getName());
             TagEntity entity = existing.orElseGet(() -> {
@@ -100,7 +141,7 @@ public class TagStore extends StateGuardLifecycleSupport {
                 log.info("Tag {} updated in database.", entity);
             } else {
                 entityAdapter.addEntity(tx, entity);
-                log.info("Tag {} added to database.", entity);
+                log.info("Tag {} added to database.!!!", entity);
             }
             return entity.toDto();
         }
@@ -112,7 +153,7 @@ public class TagStore extends StateGuardLifecycleSupport {
      */
     public void delete(String name) throws TagNotFoundException {
         log.info("Deleting {} tag.", name);
-        try (ODatabaseDocumentTx tx = dbProvider.get().acquire()) {
+        try (ODatabaseDocumentTx tx = dbProvider.get().acquire().begin()) {
             TagEntity entity = getTag(name, tx);
             entityAdapter.deleteEntity(tx, entity);
             log.info("Tag {} deleted.", entity);
@@ -129,7 +170,7 @@ public class TagStore extends StateGuardLifecycleSupport {
      */
     public Tag cloneExisting(String sourceTagName, String newTagName, Map<String, String> appendingAttributes) {
         log.info("Cloning {} into {}, appending attributes:{}", sourceTagName, newTagName, appendingAttributes);
-        try (ODatabaseDocumentTx tx = dbProvider.get().acquire()) {
+        try (ODatabaseDocumentTx tx = dbProvider.get().acquire().begin()) {
             TagEntity entity = getTag(sourceTagName, tx);
             if (entityAdapter.findByName(tx, newTagName).isPresent()) {
                 throw new TagAlreadyExistsException();
