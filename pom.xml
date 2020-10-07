@@ -6,7 +6,7 @@
 
     <groupId>ir.sahab</groupId>
     <artifactId>nexus-tag-plugin</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
 
     <packaging>bundle</packaging>
 
@@ -74,9 +74,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.sahabpardaz</groupId>
-            <artifactId>docker-compose-wrapper</artifactId>
-            <version>1.0.0</version>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.14.3</version>
             <scope>test</scope>
         </dependency>
 
@@ -133,6 +133,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/IntegrationTest.java</exclude>
+                        <include>**/UpgradeTest.java</include>
                     </excludes>
                 </configuration>
             </plugin>
@@ -150,10 +151,12 @@
                 </executions>
                 <configuration>
                     <systemProperties>
-                        <nexus.version>${test.target.nexus.version}</nexus.version>
+                        <nexusVersion>${test.target.nexus.version}</nexusVersion>
+                        <pluginVersion>${project.version}</pluginVersion>
                     </systemProperties>
                     <includes>
                         <include>**/IntegrationTest.java</include>
+                        <include>**/UpgradeTest.java</include>
                     </includes>
                 </configuration>
             </plugin>

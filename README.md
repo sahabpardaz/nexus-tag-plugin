@@ -90,7 +90,7 @@ Accept: application/json
 # Compatibility
 Minimum supported version of nexus is 3.15.1-01 at the moment. These versions have been tested:
 * 3.15.1
-* 3.24.0
+* 3.27.0
 
 Plugin may work with other versions, but it hasn't been tested yet.
 
