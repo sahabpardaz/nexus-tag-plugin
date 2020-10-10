@@ -50,7 +50,7 @@ public class NexusContainerUtil {
         if (extraBinds.length > 0) {
             container = container.withCreateContainerCmdModifier(cmd -> {
                 Bind[] existingBinds = cmd.getHostConfig().getBinds();
-                Bind[] binds = Arrays.copyOf(existingBinds, existingBinds.length + existingBinds.length);
+                Bind[] binds = Arrays.copyOf(existingBinds, existingBinds.length + extraBinds.length);
                 System.arraycopy(extraBinds, 0, binds, existingBinds.length, extraBinds.length);
                 cmd.getHostConfig().withBinds(binds);
             });
