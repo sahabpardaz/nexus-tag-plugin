@@ -141,7 +141,7 @@ public class TagStore extends StateGuardLifecycleSupport {
                 log.info("Tag {} updated in database.", entity);
             } else {
                 entityAdapter.addEntity(tx, entity);
-                log.info("Tag {} added to database.!!!", entity);
+                log.info("Tag {} added to database.", entity);
             }
             return entity.toDto();
         }
