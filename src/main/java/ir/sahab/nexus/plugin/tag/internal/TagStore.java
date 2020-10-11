@@ -75,6 +75,7 @@ public class TagStore extends StateGuardLifecycleSupport {
                 log.info("Importing {} tags from {} database.", tagsToMigrate.size(), cleanupDatabases);
                 for (TagEntity tag : tagsToMigrate) {
                     if (!entityAdapter.findByName(tx, tag.getName()).isPresent()) {
+                        tag.setEntityMetadata(null);
                         entityAdapter.addEntity(tx, tag);
                     }
                 }
