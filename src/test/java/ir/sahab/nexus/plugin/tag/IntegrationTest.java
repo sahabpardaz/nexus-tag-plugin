@@ -180,7 +180,7 @@ public class IntegrationTest {
 
         // Test Import
         List<Tag> tagsToImport = Arrays.asList(putResponseTag, tag2);
-        response = target.path("import_tags")
+        response = target.path("import-tags")
                 .request()
                 .post(Entity.entity(tagsToImport, MediaType.APPLICATION_JSON_TYPE));
         assertEquals(Status.OK.getStatusCode(), response.getStatus());

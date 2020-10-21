@@ -90,7 +90,7 @@ Accept: application/json
 
 Importing tags:
 ```
-POST http://127.0.0.1:8081/service/rest/v1/import_tags
+POST http://127.0.0.1:8081/service/rest/v1/import-tags
 Content-Type: application/json
 [
     {

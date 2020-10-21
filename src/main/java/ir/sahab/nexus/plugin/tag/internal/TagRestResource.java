@@ -147,7 +147,7 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     }
 
     @POST
-    @Path("/import_tags")
+    @Path("/import-tags")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Override
