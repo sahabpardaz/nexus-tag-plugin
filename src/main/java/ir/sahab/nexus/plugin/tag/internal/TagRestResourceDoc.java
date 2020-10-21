@@ -1,5 +1,6 @@
 package ir.sahab.nexus.plugin.tag.internal;
 
+import ir.sahab.nexus.plugin.tag.internal.dto.ImportResult;
 import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagCloneRequest;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
@@ -14,7 +15,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "tag")
+@Api(value = "Tag")
 public interface TagRestResourceDoc {
 
     @GET
@@ -61,4 +62,9 @@ public interface TagRestResourceDoc {
             @ApiResponse(code = 404, message = "Tag does not exists")
     })
     Tag clone(@ApiParam(value = "Name of tag to clone", required = true) String name, TagCloneRequest request);
+
+    @POST
+    @ApiOperation("Import given tags. Exiting tags will be ignored.")
+    @ApiResponses(value = {@ApiResponse(code = 400, message = "Invalid request")})
+    ImportResult importTags(List<Tag> tags);
 }

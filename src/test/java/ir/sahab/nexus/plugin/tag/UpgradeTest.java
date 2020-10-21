@@ -1,5 +1,6 @@
 package ir.sahab.nexus.plugin.tag;
 
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 
@@ -7,9 +8,11 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.command.ListVolumesResponse;
 import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Volume;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
 import java.util.Collections;
+import java.util.List;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -91,6 +94,14 @@ public class UpgradeTest {
         if (response.getVolumes() != null
                 && response.getVolumes().stream().map(InspectVolumeResponse::getName).anyMatch(VOLUME_NAME::equals)) {
             logger.info("Removing already existing volume.");
+
+            // API does not support removing volume with force, so we should remove owner containers first.
+            List<Container> containers =
+                    client.listContainersCmd().withVolumeFilter(singleton(VOLUME_NAME)).withShowAll(true).exec();
+            logger.info("Removing volume owner containers: {}", containers);
+            for (Container container : containers) {
+                client.removeContainerCmd(container.getId()).withForce(true).exec();
+            }
             client.removeVolumeCmd(VOLUME_NAME).exec();
             logger.info("Volume removed");
         }

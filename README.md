@@ -87,6 +87,49 @@ DELETE http://127.0.0.1:8081/service/rest/v1/tags/project1-142
 Accept: application/json
 ```
 
+
+Importing tags:
+```
+POST http://127.0.0.1:8081/service/rest/v1/import_tags
+Content-Type: application/json
+[
+    {
+        "name": "project1-142",
+        "attributes": {
+            "version": "1",
+            "status": "failed"
+        },
+        "components" : [
+            {
+              "repository": "repo1",
+              "group": "gr1",
+              "name": "comp1",
+              "version": "1"
+            }
+        ]
+        "firstCreated": "2020-10-21T06:26:27.236+0000",
+        "lastUpdated": "2020-10-21T06:26:27.236+0000"
+    },
+    {
+        "name": "project1-143",
+        "attributes": {
+            "version": "2",
+            "status": "successful"
+        },
+        "components" : [
+            {
+              "repository": "repo1",
+              "group": "gr1",
+              "name": "comp1",
+              "version": "2"
+            }
+        ]
+        "firstCreated": "2020-10-22T06:26:27.236+0000",
+        "lastUpdated": "2020-10-22T06:26:27.236+0000"
+    }
+]
+```
+
 # Compatibility
 Minimum supported version of nexus is 3.15.1-01 at the moment. These versions have been tested:
 * 3.15.1

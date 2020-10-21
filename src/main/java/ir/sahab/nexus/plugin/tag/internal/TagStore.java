@@ -3,6 +3,7 @@ package ir.sahab.nexus.plugin.tag.internal;
 import static org.sonatype.nexus.common.app.ManagedLifecycle.Phase.SCHEMAS;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import ir.sahab.nexus.plugin.tag.internal.dto.ImportResult;
 import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
 import ir.sahab.nexus.plugin.tag.internal.exception.TagAlreadyExistsException;
@@ -196,5 +197,31 @@ public class TagStore extends StateGuardLifecycleSupport {
         }
         log.info("Tag {} found: {}", name, optional.get());
         return optional.get();
+    }
+
+    /**
+     * Imports given tags. Exiting tags are ignored.
+     * @return number of created tags
+     */
+    public int importTags(List<Tag> tags) {
+        int created = 0;
+        log.info("Importing {} tags into the database.", tags.size());
+        try (ODatabaseDocumentTx tx = dbProvider.get().acquire().begin()) {
+            for (Tag tag : tags) {
+                if (!entityAdapter.findByName(tx, tag.getName()).isPresent()) {
+                    log.debug("Adding {} tag.", tag.getName());
+                    TagEntity entity = entityAdapter.newEntity();
+                    entity.setName(tag.getName());
+                    entity.setAttributes(tag.getAttributes());
+                    entity.setComponents(tag.getComponents());
+                    entity.setFirstCreated(tag.getFirstCreated());
+                    entity.setLastUpdated(tag.getLastUpdated());
+                    entityAdapter.addEntity(tx, entity);
+                    created++;
+                }
+            }
+        }
+        log.info("{} out of {} tags imported into the database.", created, tags.size());
+        return created;
     }
 }
