@@ -2,6 +2,7 @@ package ir.sahab.nexus.plugin.tag.internal;
 
 import static org.sonatype.nexus.rest.APIConstants.V1_API_PREFIX;
 
+import ir.sahab.nexus.plugin.tag.internal.dto.ImportResult;
 import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagCloneRequest;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
@@ -39,7 +40,7 @@ import org.sonatype.nexus.rest.Resource;
  */
 @Named
 @Singleton
-@Path(V1_API_PREFIX + "/tags")
+@Path(V1_API_PREFIX)
 public class TagRestResource extends ComponentSupport implements Resource, TagRestResourceDoc {
 
     private final TagStore tagStore;
@@ -52,7 +53,7 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     }
 
     @GET
-    @Path("/{name}")
+    @Path("/tags/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     @Override
     public Tag getByName(@PathParam("name") String name) {
@@ -60,6 +61,7 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     }
 
     @GET
+    @Path("/tags")
     @Produces(MediaType.APPLICATION_JSON)
     @Override
     public List<Tag> list(@QueryParam("attribute") List<String> attributes,
@@ -103,6 +105,7 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     }
 
     @POST
+    @Path("/tags")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Override
@@ -112,7 +115,7 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     }
 
     @PUT
-    @Path("/{name}")
+    @Path("/tags/{name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Override
@@ -127,20 +130,30 @@ public class TagRestResource extends ComponentSupport implements Resource, TagRe
     }
 
     @DELETE
-    @Path("/{name}")
+    @Path("/tags/{name}")
     @Override
     public void delete(@PathParam("name") String name) {
         tagStore.delete(name);
     }
 
     @POST
-    @Path("/{name}")
+    @Path("/tags/{name}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Override
     public Tag clone(@PathParam("name") String name, TagCloneRequest request) {
         validate(request);
         return tagStore.cloneExisting(request.getSourceName(), name, request.getAppendingAttributes());
+    }
+
+    @POST
+    @Path("/import-tags")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Override
+    public ImportResult importTags(List<Tag> tags) {
+        int created = tagStore.importTags(tags);
+        return new ImportResult(tags.size(), created);
     }
 
     /**

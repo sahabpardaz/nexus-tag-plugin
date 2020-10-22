@@ -3,6 +3,7 @@ package ir.sahab.nexus.plugin.tag.internal.dto;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a tag which can be created using REST API. This class is meant to
@@ -38,6 +39,25 @@ public class Tag extends TagDefinition {
 
     public void setLastUpdated(Date lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        Tag tag = (Tag) o;
+        return name.equals(tag.name) &&
+               attributes.equals(tag.attributes) &&
+               components.equals(tag.components) &&
+               firstCreated.equals(tag.firstCreated) &&
+               lastUpdated.equals(tag.lastUpdated);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(firstCreated, lastUpdated);
     }
 
     @Override

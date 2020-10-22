@@ -12,6 +12,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import ir.sahab.nexus.plugin.tag.internal.dto.AssociatedComponent;
+import ir.sahab.nexus.plugin.tag.internal.dto.ImportResult;
 import ir.sahab.nexus.plugin.tag.internal.dto.Tag;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagCloneRequest;
 import ir.sahab.nexus.plugin.tag.internal.dto.TagDefinition;
@@ -113,7 +114,7 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testCrud() {
+    public void testCrudAndImport() {
         // Add Tags
         TagDefinition tagDef1 =
                 new TagDefinition(randomAlphanumeric(5), createAttributes(), Arrays.asList(component1, component3));
@@ -121,7 +122,7 @@ public class IntegrationTest {
 
         TagDefinition tagDef2 = new TagDefinition(randomAlphanumeric(5), createAttributes(),
                 Arrays.asList(component1, component2));
-        addTagAndAssert(tagDef2);
+        Tag tag2 = addTagAndAssert(tagDef2);
 
         // Test Get by name
         Tag retrieved = target.path("tags/" + tagDef1.getName()).request().get(Tag.class);
@@ -176,6 +177,20 @@ public class IntegrationTest {
         response = target.path("tags/" + tagDef1.getName()).request().get();
         assertEquals(Status.NOT_FOUND.getStatusCode(), response.getStatus());
         response.close();
+
+        // Test Import
+        List<Tag> tagsToImport = Arrays.asList(putResponseTag, tag2);
+        response = target.path("import-tags")
+                .request()
+                .post(Entity.entity(tagsToImport, MediaType.APPLICATION_JSON_TYPE));
+        assertEquals(Status.OK.getStatusCode(), response.getStatus());
+        ImportResult importResult = response.readEntity(ImportResult.class);
+        assertEquals(tagsToImport.size(), importResult.getTotal());
+        // tag2 already exists, so we expect that 1 tag would be created.
+        assertEquals(1, importResult.getCreated());
+        response.close();
+        retrieved = target.path("tags/" + tagDef1.getName()).request().get(Tag.class);
+        assertEquals(putResponseTag, retrieved);
     }
 
 
@@ -204,10 +219,6 @@ public class IntegrationTest {
         assertEquals(newName, cloned.getName());
         assertEquals(ImmutableMap.of("attr1", "val1", "attr2", "val2"), cloned.getAttributes());
         assertEquals(tag.getComponents(), cloned.getComponents());
-
-        // Check tag is actually created
-        Tag retrieved = target.path("tags/" + newName).request().get(Tag.class);
-        assertDefinitionEquals(cloned, retrieved);
     }
 
     @Test
