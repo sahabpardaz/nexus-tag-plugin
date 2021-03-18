@@ -130,12 +130,13 @@ Content-Type: application/json
 ]
 ```
 
-# Compatibility
-Minimum supported version of nexus is 3.15.1-01 at the moment. These versions have been tested:
-* 3.15.1
-* 3.27.0
+# Compatibility Matrix
 
-Plugin may work with other versions, but it hasn't been tested yet.
+| Plugin Version | Nexus Version                    | Tested Nexus Versions |
+| -------------- |:--------------------------------:|:---------------------:|
+| 1.1.0          | &gt;= 3.15.1 <br> &lt; 3.28.0     | 3.15.1 <br> 3.27.0   | 
+| 1.2.0          | &gt;= 3.28.0                      | 3.28.0 <br> 3.30.0   | 
+
 
 # License
 This project is licensed under the Apache License - see the LICENSE.md file for details
