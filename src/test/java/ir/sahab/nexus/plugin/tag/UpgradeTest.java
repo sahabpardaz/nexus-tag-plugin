@@ -52,7 +52,7 @@ public class UpgradeTest {
     @Test
     public void testUpgrade() throws Exception {
         // Start old version
-        startNexus("3.15.1");
+        startNexus("3.28.0");
 
         // Add Tags
         String tagName = "test-tag";
@@ -63,7 +63,7 @@ public class UpgradeTest {
         response.close();
 
         // Upgrade nexus
-        startNexus("3.27.0");
+        startNexus("3.30.0");
 
         // Check if tag already exists.
         response = tagTarget().path(tagName).request().get();

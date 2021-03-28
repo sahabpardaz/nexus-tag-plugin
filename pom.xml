@@ -6,14 +6,14 @@
 
     <groupId>ir.sahab</groupId>
     <artifactId>nexus-tag-plugin</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 
     <packaging>bundle</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <nexus.version>3.15.1-01</nexus.version>
-        <test.target.nexus.version>3.15.1</test.target.nexus.version>
+        <nexus.version>3.28.0-01</nexus.version>
+        <test.target.nexus.version>3.28.0</test.target.nexus.version>
     </properties>
 
     <dependencyManagement>
@@ -52,7 +52,7 @@
 
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-validator-provider-11</artifactId>
+            <artifactId>resteasy-validator-provider</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -76,7 +76,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.14.3</version>
+            <version>1.15.2</version>
             <scope>test</scope>
         </dependency>
 

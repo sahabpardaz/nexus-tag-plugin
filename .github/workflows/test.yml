@@ -26,5 +26,5 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Build and verify with default nexus version
         run: mvn -B verify --file pom.xml
-      - name: Build and verify with nexus 3.27.0
-        run: mvn -B  -Dtest.target.nexus.version=3.27.0 verify --file pom.xml
+      - name: Build and verify with nexus 3.30.0
+        run: mvn -B -Dtest.target.nexus.version=3.30.0 verify --file pom.xml
